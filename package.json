@@ -19,6 +19,7 @@
   "homepage": "https://github.com/Eszypher58/liri-node-app#readme",
   "dependencies": {
     "node-spotify-api": "^1.0.7",
-    "request": "^2.81.0"
+    "request": "^2.81.0",
+    "twit": "^2.2.9"
   }
 }

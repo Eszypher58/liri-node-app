@@ -1,16 +1,124 @@
-var twitter = require("./keys.js");
+var config = require("./keys.js");
+var Twit = require("twit");
 var Spotify = require("node-spotify-api");
 var request = require("request");
 var fs = require("fs");
 
 var cmd = process.argv[2];
 var param = process.argv[3];
+var twitter = new Twit({
 
-function queryTwitter(searchTerm) {
+	consumer_key: config.twitterKeys.consumer_key,
+	consumer_secret: config.twitterKeys.consumer_secret,
+	access_token: config.twitterKeys.access_token_key,
+	access_token_secret: config.twitterKeys.access_token_secret,
 
-	
-	
+});
+
+/*
+var ckey = twitter.twitterKeys.consumer_key;
+var csec = twitter.twitterKeys.consumer_secret;
+var atk = twitter.twitterKeys.access_token_key;
+var atc = twitter.twitterKeys.access_token_secret;
+
+//console.log(ckey);
+//console.log(csec);
+//console.log(atk);
+//console.log(atc);
+*/
+
+function postTweet(query) {
+
+	twitter.post('statuses/update',
+				query,
+				function(err, data, response) {
+						
+					if (err) {
+		      			
+		      			console.log(data)
+		      			
+		      		} else {
+
+		      		}
+				
+				})
+
 }
+
+function writeTriviaTwitter(category) {
+
+	var queryTrivia = "https://opentdb.com/api.php?amount=1&category=" + category + "&difficulty=hard&type=multiple"
+
+	request(queryTrivia, function(err, response, body){
+
+		if (!err && response.statusCode === 200) {
+
+			//console.log(JSON.parse(body).results);
+			var array = JSON.parse(body).results;
+
+			//console.log(array.length)
+
+			if (array.length === 0) {
+
+				//console.log(array[i].question);
+
+					var q = { status: "My bot is still thinking... Try again later!"}
+					postTweet(q);
+
+			} else {
+
+				for (var i = 0; i < array.length; i++) {
+
+					//console.log(array[i].question);
+
+					var q = { status: array[i].question }
+					postTweet(q);
+
+				}
+
+
+			}
+
+						
+		}
+
+	})
+
+}
+
+//writeTriviaTwitter();
+
+function queryTwitter() {
+
+	var query = { user_id: '@jd668899', screen_name: "john doe" }
+
+	twitter.get('statuses/user_timeline',
+				query,
+				function(err, data, response) {
+					
+					if (err) {
+	      			
+	      				console.log(err)
+	      			
+	      			} else {
+
+	      				
+
+	      				for (var i = 0; i < data.length; i++) {
+
+	      					console.log(data[i].created_at);
+	      					console.log(data[i].text);
+
+
+	      				}
+
+
+	      			}
+				})
+		
+}
+
+//queryTwitter();
 
 function querySpotify(searchTerm) {
 
@@ -149,6 +257,20 @@ function logToFile(dataArray) {
 }
 
 function startLiri(instruction, parameter) {
+
+	if (instruction === "my-tweets") {
+
+		queryTwitter();
+
+	}
+
+	if (instruction === "tweet-trivia") {
+
+		var cat = (Math.floor(Math.random() * 20) + 1).toString();
+		//console.log(cat);
+		writeTriviaTwitter(cat);
+
+	}
 	
 	if (instruction === "spotify-this-song") {
 
