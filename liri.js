@@ -54,6 +54,7 @@ function writeTriviaTwitter(category) {
 				var q = { status: "My bot is still thinking... Try again later!" }
 				
 				postTweet(q);
+				console.log("Tweeted.");
 
 			} else {
 
@@ -62,6 +63,7 @@ function writeTriviaTwitter(category) {
 					var q = { status: array[i].question }
 					
 					postTweet(q);
+					console.log("Tweeted.");
 
 				}
 
@@ -212,7 +214,7 @@ function queryMovie(searchTerm) {
 
 }
 
-//read command off of file random.txt and have liri perform the command written inside the file; currently only works with one command, need to be expanded
+//read command off of file random.txt and have liri perform the command written inside the file; currently only works with command parameter in the form of <command,"parameter";>. Parsing of each command/paramter pair is based on ";". There is currenty an error that I suspect is due to the recursive nature of how startLiri() can call doWhatItSays(), which will call startLiri(). I have yet to test that.
 function doWhatItSays() {
 
 	fs.readFile("random.txt", "utf8", function(err, data){
@@ -233,19 +235,11 @@ function doWhatItSays() {
 
 			}
 
-			
-
-			//console.log(line);
-
-			//startLiri(result[0],result[1]);
-
 		}
 
 	})
 
 }
-
-doWhatItSays();
 
 //write the content of dataArray into a file called log.txt
 function logToFile(dataArray) {
@@ -280,50 +274,58 @@ function startLiri(instruction, parameter) {
 	           "parameter: " + parameter
 	          ]);
 
-	if (instruction === "my-tweets") {
+	switch (instruction) {
 
-		queryTwitter();
+		case "my-tweets":
 
-	}
+			queryTwitter();
+			break;
 
-	if (instruction === "tweet-trivia") {
+		case "tweet-trivia":
 
-		var cat = (Math.floor(Math.random() * 20) + 1).toString();
-		writeTriviaTwitter(cat);
+			var cat = (Math.floor(Math.random() * 20) + 1).toString();
+			writeTriviaTwitter(cat);
+			break;
 
-	}
-	
-	if (instruction === "spotify-this-song") {
+		case "spotify-this-song":
 
-		if (parameter === undefined) {
 
-			querySpotify("The Sign Ace of Base");
+			if (parameter === undefined) {
 
-		} else {
+				querySpotify("The Sign Ace of Base");
 
-			querySpotify(parameter);
+			} else {
 
-		}
+				querySpotify(parameter);
 
-	}
+			}
+			break;
 
-	if (instruction === "movie-this") {
+		case "movie-this":
 
-		if (parameter === undefined) {
+			if (instruction === "movie-this") {
 
-			queryMovie("Mr. Nobody");
+				if (parameter === undefined) {
 
-		} else {
+					queryMovie("Mr. Nobody");
 
-			queryMovie(parameter);
+				} else {
 
-		}
+					queryMovie(parameter);
 
-	}
+				}
 
-	if (instruction === "do-what-it-says") {
+			}		
+			break;
 
-		doWhatItSays();
+		case "do-what-it-says":
+
+			doWhatItSays();
+			break;
+
+		default:
+
+			console.log("I do not understand you... I quit!");
 
 	}
 
