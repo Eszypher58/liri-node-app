@@ -15,18 +15,6 @@ var twitter = new Twit({
 
 });
 
-/*
-var ckey = twitter.twitterKeys.consumer_key;
-var csec = twitter.twitterKeys.consumer_secret;
-var atk = twitter.twitterKeys.access_token_key;
-var atc = twitter.twitterKeys.access_token_secret;
-
-//console.log(ckey);
-//console.log(csec);
-//console.log(atk);
-//console.log(atc);
-*/
-
 function postTweet(query) {
 
 	twitter.post('statuses/update',
@@ -108,7 +96,7 @@ function queryTwitter() {
 
 	      					console.log(data[i].created_at);
 	      					console.log(data[i].text);
-
+	      					//write to log file
 
 	      				}
 
@@ -124,8 +112,8 @@ function querySpotify(searchTerm) {
 
 	var spotify = new Spotify({
 
-		id: "d0aea9958f4e4284b9a5d6a63ce1a33e",
-		secret: "208b042ec80c4f34ad1494247fba1f4f",
+		id: config.spotifyKeys.id,
+		secret: config.spotifyKeys.secret,
 	
 	});
 
