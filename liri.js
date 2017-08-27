@@ -1,11 +1,15 @@
+//define node.js required modules and configurations
 var config = require("./keys.js");
 var Twit = require("twit");
 var Spotify = require("node-spotify-api");
 var request = require("request");
 var fs = require("fs");
 
+//obtain inputted command and parameter to liri
 var cmd = process.argv[2];
 var param = process.argv[3];
+
+//Construct Twitter to allow authentication/post/get
 var twitter = new Twit({
 
 	consumer_key: config.twitterKeys.consumer_key,
@@ -15,6 +19,7 @@ var twitter = new Twit({
 
 });
 
+//post query to twitter account associated with the Oauth key/secret
 function postTweet(query) {
 
 	twitter.post('statuses/update',
@@ -33,6 +38,7 @@ function postTweet(query) {
 
 }
 
+//tweets one trivia question from openTriviaDb to twitter account associated with Oauth
 function writeTriviaTwitter(category) {
 
 	var queryTrivia = "https://opentdb.com/api.php?amount=1&category=" + category + "&difficulty=hard&type=multiple"
@@ -41,41 +47,33 @@ function writeTriviaTwitter(category) {
 
 		if (!err && response.statusCode === 200) {
 
-			//console.log(JSON.parse(body).results);
 			var array = JSON.parse(body).results;
-
-			//console.log(array.length)
 
 			if (array.length === 0) {
 
-				//console.log(array[i].question);
-
-					var q = { status: "My bot is still thinking... Try again later!"}
-					postTweet(q);
+				var q = { status: "My bot is still thinking... Try again later!" }
+				
+				postTweet(q);
 
 			} else {
 
 				for (var i = 0; i < array.length; i++) {
 
-					//console.log(array[i].question);
-
 					var q = { status: array[i].question }
+					
 					postTweet(q);
 
 				}
 
-
 			}
-
-						
+			
 		}
 
 	})
 
 }
 
-//writeTriviaTwitter();
-
+//Display the last 20 tweets on terminal and log data to file
 function queryTwitter() {
 
 	var query = { user_id: '@jd668899', screen_name: "john doe" }
@@ -90,24 +88,27 @@ function queryTwitter() {
 	      			
 	      			} else {
 
-	      				
-
 	      				for (var i = 0; i < data.length; i++) {
 
-	      					console.log(data[i].created_at);
-	      					console.log(data[i].text);
-	      					//write to log file
+	      					var time = "Created at: " + data[i].created_at;
+	      					var text = "Tweet content: " + data[i].text;
+	      					var dataArray = [time, text];
+
+	      					logToFile(dataArray);
+
+	      					console.log(time);
+	      					console.log(text);   					
 
 	      				}
 
-
+	      		
 	      			}
+
 				})
 		
 }
 
-//queryTwitter();
-
+//Based on searchTerm, use node-spotify-api to return isplay artist, name, preview link, and album name to console and log the data to file
 function querySpotify(searchTerm) {
 
 	var spotify = new Spotify({
@@ -121,16 +122,13 @@ function querySpotify(searchTerm) {
 		type: "track",
 		query: searchTerm,
 		limit: 1,
-		//artist: artists,
 
 	}).then(function(response){
 
-		//console.log(JSON.stringify(response, null, 2));
-
-		var artists = response.tracks.items[0].artists[0].name;
-		var name = response.tracks.items[0].name;
-		var previewLink = response.tracks.items[0].preview_url;
-		var album = response.tracks.items[0].album.name;
+		var artists = "Artists: " + response.tracks.items[0].artists[0].name;
+		var name = "Track Name: " + response.tracks.items[0].name;
+		var previewLink = "Preview Link: " + response.tracks.items[0].preview_url;
+		var album = "Album Name: " + response.tracks.items[0].album.name;
 
 		var dataArray = [artists, name, previewLink, album];
 
@@ -140,23 +138,32 @@ function querySpotify(searchTerm) {
 		console.log(name);
 		console.log(previewLink);
 		console.log(album);
-		//console.log(JSON.stringify(previewLink, null, 2));
-		//console.log(JSON.stringify(album, null, 2));
 
 	})
 
 }
 
-//console.log(typeof(param));
 
-//querySpotify("I Want it That Way");
+//return a formmated time stamp like 2015-10-21 17:32:57
+function timeStamp() {
 
+	var d = new Date();
+	var str = d.getFullYear() + "-" +
+			  d.getMonth() + "-" +
+			  d.getDate() + " " +
+			  d.getHours() + ":" +
+			  d.getMinutes() + ":" +
+			  d.getSeconds();
+
+	return str;
+
+}
+
+//Based on searchTerm, use request to query OMDB for information to output to console and log information to file
 function queryMovie(searchTerm) {
 
 	var movieName = searchTerm.replace(" ", "_");
 	var queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=40e9cece";
-
-	console.log(movieName);
 
 	request(queryUrl, function(error, response, body){
 
@@ -168,16 +175,22 @@ function queryMovie(searchTerm) {
 
 			} else {
 
-				//console.log(JSON.parse(body));
+				var title = "Title: " + JSON.parse(body).Title;	
+				var year = "Year: " + JSON.parse(body).Year;
+				var imdbRating = "IMDB Rating: " + JSON.parse(body).imdbRating;
+				var rottenTomato = "none";
 
-				var title = JSON.parse(body).Title;	
-				var year = JSON.parse(body).Year;
-				var imdbRating = JSON.parse(body).imdbRating;
-				var rottenTomato = JSON.parse(body).Ratings[1].Value;
-				var country = JSON.parse(body).Country;
-				var lang = JSON.parse(body).Language;
-				var plot = JSON.parse(body).Plot;
-				var actors = JSON.parse(body).Actors;
+				//take care of edge case where rotten tomato rating is not avilable
+				if (JSON.parse(body).Ratings[1] != undefined) {
+
+					rottenTomato = "Rotten Tomato Rating: " + JSON.parse(body).Ratings[1].Value
+
+				};
+				
+				var country = "Country: " + JSON.parse(body).Country;
+				var lang = "Language: " + JSON.parse(body).Language;
+				var plot = "Plot: " + JSON.parse(body).Plot;
+				var actors = "Actors: " + JSON.parse(body).Actors;
 				var dataArray = [title, year, imdbRating, rottenTomato, country, lang, plot, actors];
 
 				logToFile(dataArray);
@@ -193,12 +206,13 @@ function queryMovie(searchTerm) {
 			
 			}
 
-		} 
+		}
 
 	})
 
 }
 
+//read command off of file random.txt and have liri perform the command written inside the file; currently only works with one command, need to be expanded
 function doWhatItSays() {
 
 	fs.readFile("random.txt", "utf8", function(err, data){
@@ -209,42 +223,62 @@ function doWhatItSays() {
 
 		} else {
 
-			var result = data.split(",");
-			console.log(result);
-			startLiri(result[0],result[1]);
+			var result = data.split(";");
 
-		}
+			for (var i = 0; i < result.length; i ++) {
 
-	})
+				var line = result[i].split(",");
 
-}
+				startLiri(line[0],line[1]);
 
-function logToFile(dataArray) {
+			}
 
-	for (var i = 0; i < dataArray.length; i++) {
+			
 
-	fs.appendFile("log.txt", dataArray[i] + "\n" ,"utf8", function(err){
+			//console.log(line);
 
-		if(err) {
-
-			console.log(err);
-
-		} else {
-
-			//var result = data.split(",");
-			//console.log("Data written");
 			//startLiri(result[0],result[1]);
 
 		}
 
 	})
 
-	}
+}
 
+doWhatItSays();
+
+//write the content of dataArray into a file called log.txt
+function logToFile(dataArray) {
+
+	for (var i = 0; i < dataArray.length; i++) {
+
+		fs.appendFile("log.txt", 
+		              timeStamp() + " >>> " + dataArray[i] + "\n", 
+		              "utf8", 
+		              function(err){
+
+						if(err) {
+
+							console.log(err);
+
+						} else {
+
+							//nothing is displayed to prevent spamming terminal
+
+						}
+
+		})
+
+	}
 
 }
 
+//start Liri
 function startLiri(instruction, parameter) {
+
+	logToFile(["command: " + instruction, 
+	           "parameter: " + parameter
+	          ]);
 
 	if (instruction === "my-tweets") {
 
@@ -255,7 +289,6 @@ function startLiri(instruction, parameter) {
 	if (instruction === "tweet-trivia") {
 
 		var cat = (Math.floor(Math.random() * 20) + 1).toString();
-		//console.log(cat);
 		writeTriviaTwitter(cat);
 
 	}
@@ -297,3 +330,4 @@ function startLiri(instruction, parameter) {
 }
 
 startLiri(cmd, param);
+
